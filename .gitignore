@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+node_modules/
+/compassionate_guardian/
+/guardian_qr_inicio/
+/panel_de_administraci_n_mascotas_perdidas_es/
+/perfil_de_mascota_vista_qr/
+/reportar_mascota_perdida/

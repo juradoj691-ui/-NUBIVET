@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="NUBIVET reúne identificación QR e información sanitaria para cuidar mejor a perros y gatos.">
+  <meta name="theme-color" content="#00666e">
+  <title>NUBIVET | Identidad inteligente para tu mascota</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+</head>
+<body data-page="public" class="page-shell">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#inicio"><span class="material-symbols-outlined">pets</span>NUBIVET</a>
+      <nav class="desktop-nav" aria-label="Navegación pública">
+        <a href="#inicio">Inicio</a><a href="#perdidas">Mascotas</a><a href="#salud">Salud</a><a href="#tamanos">Collares</a><a href="#ayuda">Ayuda</a>
+      </nav>
+      <a class="btn btn-primary" href="#reportar">Solicitar collar</a>
+    </div>
+  </header>
+  <main>
+    <section class="section" data-public-pet-profile hidden></section>
+    <section id="inicio" class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow"><span class="material-symbols-outlined">verified</span>Identidad inteligente para tu mascota</div>
+          <h1>Su salud y su hogar, siempre a un escaneo de distancia.</h1>
+          <p class="lead">NUBIVET transforma el collar en una identidad digital segura. Un QR único conecta a perros y gatos con su ficha, sus cuidados importantes y una forma sencilla de ayudarles a volver a casa.</p>
+          <div class="button-row">
+            <a class="btn btn-primary" href="#tamanos">Encuentra su collar <span class="material-symbols-outlined">arrow_forward</span></a>
+            <a class="btn btn-secondary" href="#salud">Conoce NUBIVET</a>
+          </div>
+          <div class="hero-trust"><span><span class="material-symbols-outlined">shield</span>Información protegida</span><span><span class="material-symbols-outlined">qr_code_scanner</span>QR único</span><span><span class="material-symbols-outlined">favorite</span>Bienestar animal</span></div>
+        </div>
+        <div class="hero-media">
+          <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=1000&q=85" alt="Perro con su familia, protegido con identificación QR">
+          <div class="media-note"><span class="material-symbols-outlined">qr_code_scanner</span><div><strong>Un QR que los conecta siempre</strong><br><span class="muted">Identificación, información y tranquilidad</span></div></div>
+        </div>
+      </div>
+    </section>
+    <section id="salud" class="section health-section">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow" style="margin:auto"><span class="material-symbols-outlined">health_and_safety</span>Información que acompaña su cuidado</div>
+          <h2>Todo lo importante de su salud, en un solo lugar.</h2>
+          <p>Los datos que suelen quedar dispersos entre carnets y documentos pueden reunirse en una ficha digital individual, fácil de consultar cuando hace falta.</p>
+        </div>
+        <div class="card-grid four">
+          <article class="card health-card"><span class="material-symbols-outlined">vaccines</span><h3>Vacunación</h3><p>Consulta vacunas, fechas y cuidados preventivos.</p></article>
+          <article class="card health-card"><span class="material-symbols-outlined">event_available</span><h3>Controles</h3><p>Mantén a mano los datos relevantes de seguimiento.</p></article>
+          <article class="card health-card"><span class="material-symbols-outlined">medication</span><h3>Tratamientos</h3><p>Registra medicación, alergias y antecedentes útiles.</p></article>
+          <article class="card health-card"><span class="material-symbols-outlined">lock</span><h3>Acceso responsable</h3><p>La información sensible solo está disponible para administración autorizada.</p></article>
+        </div>
+        <div class="health-note"><span class="material-symbols-outlined">info</span><p>La ficha complementa la atención veterinaria; no reemplaza el diagnóstico ni las indicaciones de un profesional.</p></div>
+      </div>
+    </section>
+    <section id="perdidas" class="section">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow" style="margin:auto"><span class="material-symbols-outlined">qr_code_scanner</span>Ayuda para volver a casa</div>
+          <h2>Perfiles de mascotas</h2>
+          <p>Cuando se registra un perfil, aquí se muestran sus datos de identificación y los avisos de mascotas extraviadas.</p>
+        </div>
+        <div id="public-pets" class="card-grid three"></div>
+        <p class="muted" style="text-align:center;margin-top:22px">¿Necesitas registrar a tu mascota? <a class="text-link" href="#reportar">Solicita tu collar NUBIVET.</a></p>
+      </div>
+    </section>
+    <section id="tamanos" class="section size-catalog">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow" style="margin:auto"><span class="material-symbols-outlined">pets</span>Una opción para cada compañero</div>
+          <h2>Collares para mascotas pequeñas, medianas y grandes.</h2>
+          <p>Elige el modelo que se adapta a tu mascota. Cada collar NUBIVET lleva su propio código QR de identificación.</p>
+        </div>
+        <div class="size-catalog-grid">
+          <article class="size-card size-small"><div class="size-card-icon"><span class="material-symbols-outlined">pets</span></div><span class="size-card-label">Mascotas pequeñas</span><h3>NUBIVET CAT</h3><p>Un collar pensado para gatos y mascotas pequeñas.</p><a class="text-link" data-contact-link href="https://wa.me/59170000000" target="_blank" rel="noopener">Consultar disponibilidad <span class="material-symbols-outlined">arrow_forward</span></a></article>
+          <article class="size-card size-medium"><div class="size-card-icon"><span class="material-symbols-outlined">pets</span></div><span class="size-card-label">Mascotas medianas</span><h3>NUBIVET MINI</h3><p>Identificación cómoda para perros de tamaño pequeño y mediano.</p><a class="text-link" data-contact-link href="https://wa.me/59170000000" target="_blank" rel="noopener">Consultar disponibilidad <span class="material-symbols-outlined">arrow_forward</span></a></article>
+          <article class="size-card size-large"><div class="size-card-icon"><span class="material-symbols-outlined">pets</span></div><span class="size-card-label">Mascotas grandes</span><h3>NUBIVET MAX</h3><p>Un modelo resistente para perros de tamaño grande.</p><a class="text-link" data-contact-link href="https://wa.me/59170000000" target="_blank" rel="noopener">Consultar disponibilidad <span class="material-symbols-outlined">arrow_forward</span></a></article>
+        </div>
+      </div>
+    </section>
+    <section id="reportar" class="section">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow" style="margin:auto"><span class="material-symbols-outlined">campaign</span>Empieza aquí</div>
+          <h2>Solicita un collar y activa su ficha.</h2>
+          <p>Déjanos tu nombre y WhatsApp. Nuestro equipo te contactará para orientarte con el registro y la activación del perfil de tu mascota.</p>
+        </div>
+        <form id="public-report-form" class="form-card" style="max-width:620px">
+          <div class="form-grid two">
+            <div class="form-field"><label for="public-owner">Tu nombre *</label><input id="public-owner" name="owner" required autocomplete="name"></div>
+            <div class="form-field"><label for="public-phone">Tu WhatsApp *</label><input id="public-phone" name="phone" type="tel" required autocomplete="tel" placeholder="+591 700 00000"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-primary" type="submit"><span class="material-symbols-outlined">send</span>Enviar solicitud</button></div>
+        </form>
+      </div>
+    </section>
+    <section id="ayuda" class="section" style="background:var(--soft)">
+      <div class="container">
+        <div class="section-heading"><div class="eyebrow" style="margin:auto"><span class="material-symbols-outlined">help</span>Simple para toda la familia</div><h2>¿Cómo funciona?</h2><p>Una solución práctica para identificar a tu mascota y tener a mano información que ayude a cuidarla.</p></div>
+        <div class="card-grid three">
+          <article class="card"><div class="step-number">1</div><h3>Activa su perfil</h3><p>El equipo registra sus datos y vincula un código QR individual al collar.</p></article>
+          <article class="card"><div class="step-number">2</div><h3>Organiza su información</h3><p>Su ficha permite reunir datos de salud y cuidados importantes para su seguimiento.</p></article>
+          <article class="card"><div class="step-number">3</div><h3>Facilita el reencuentro</h3><p>Si alguien encuentra a tu mascota, puede escanear el QR y avisar a nuestro equipo.</p></article>
+        </div>
+      </div>
+    </section>
+    <section class="section mission-section">
+      <div class="container mission-card"><div class="mission-icon"><span class="material-symbols-outlined">volunteer_activism</span></div><div><div class="eyebrow">Nuestra razón de ser</div><h2>Cuidar mejor también es estar conectados.</h2><p>NUBIVET nace para organizar la información sanitaria de perros y gatos, apoyar la prevención y promover una tenencia responsable. El collar con QR complementa la identificación y acerca a familias, profesionales veterinarios y comunidades mediante alianzas y un modelo de producción responsable.</p></div></div>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><div><a class="brand" href="#inicio"><span class="material-symbols-outlined">pets</span>NUBIVET</a><div>© <span data-year></span> NUBIVET · Identidad inteligente para tu mascota</div></div><span>Contacto: <a data-contact-text href="https://wa.me/59170000000" target="_blank" rel="noopener">+591 700 00000</a></span></div></footer>
+  <nav class="mobile-nav" aria-label="Navegación móvil"><a class="active" href="#inicio"><span class="material-symbols-outlined">home</span>Inicio</a><a href="#perdidas"><span class="material-symbols-outlined">pets</span>Mascotas</a><a href="#salud"><span class="material-symbols-outlined">health_and_safety</span>Salud</a><a href="#tamanos"><span class="material-symbols-outlined">shopping_bag</span>Collares</a></nav>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#00666e">
+  <title>Acceso de administración | NUBIVET</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+</head>
+<body data-page="login" class="page-shell">
+  <header class="site-header"><div class="container header-inner"><a class="brand" href="index.html"><span class="material-symbols-outlined">pets</span>NUBIVET</a><a class="text-link" href="index.html">Volver al inicio</a></div></header>
+  <main class="section login-section">
+    <div class="form-card login-card">
+      <div class="eyebrow"><span class="material-symbols-outlined">lock</span>Zona privada</div>
+      <h1>Panel de administración</h1>
+      <p class="muted">Acceso exclusivo para personal NUBIVET autorizado.</p>
+      <form id="login-form" novalidate>
+        <div class="form-field"><label for="access-email">Correo electrónico</label><input id="access-email" type="email" autocomplete="username" required placeholder="admin@ejemplo.com"></div>
+        <div class="form-field"><label for="access-key">Contraseña</label><input id="access-key" type="password" autocomplete="current-password" required placeholder="Tu contraseña"><div id="login-error" class="error-message" role="alert"></div></div>
+        <div class="modal-actions"><button type="button" class="btn btn-secondary" data-cancel-login>Volver</button><button type="submit" class="btn btn-primary">Entrar <span class="material-symbols-outlined">arrow_forward</span></button></div>
+      </form>
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
