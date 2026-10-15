@@ -14,6 +14,29 @@
 
   const getPetSize = (pet) => pet.size || (/gato|cat/i.test(pet.species || '') ? 'small' : 'medium');
   const getPetSizeLabel = (pet) => PET_SIZE_LABELS[getPetSize(pet)] || 'Mediana';
+  const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+  const parseVaccineRecords = (value) => {
+    if (!value) return [];
+    try {
+      const records = JSON.parse(value);
+      if (Array.isArray(records)) {
+        return records.filter((record) => record && typeof record === 'object').map((record) => ({
+          name: String(record.name || ''),
+          date: String(record.date || ''),
+          nextDate: String(record.nextDate || '')
+        }));
+      }
+    } catch {
+      return [{ name: String(value), date: '', nextDate: '' }];
+    }
+    return [{ name: String(value), date: '', nextDate: '' }];
+  };
   const normalizePhone = (phone) => String(phone || '').replace(/\D/g, '');
   const getOwnerGroupKey = (owner) => normalizePhone(owner.phone) || String(owner.email || owner.id || owner.name || '').trim().toLowerCase();
   const hasCloudConfiguration = () => Boolean(window.NUBIVET_CONFIG?.supabaseUrl && window.NUBIVET_CONFIG?.supabaseAnonKey);
@@ -34,6 +57,11 @@
         dataCache[key] = [];
       }
     });
+    dataCache[PETS_KEY] = dataCache[PETS_KEY].map((pet) => ({
+      ...pet,
+      publicLastSeen: Object.prototype.hasOwnProperty.call(pet, 'publicLastSeen') ? pet.publicLastSeen : true,
+      publicVaccines: Object.prototype.hasOwnProperty.call(pet, 'publicVaccines') ? pet.publicVaccines : true
+    }));
     dataCache[REQUESTS_KEY] = dataCache[REQUESTS_KEY].map((request) => ({
       id: request.id || crypto.randomUUID(),
       createdAt: request.createdAt || new Date().toISOString(),
@@ -99,6 +127,10 @@
       sex: row.sex,
       temperament: row.temperament,
       lastSeen: row.last_seen_place,
+      publicLastSeen: Boolean(row.public_last_seen),
+      additionalDescription: row.additional_description,
+      publicOwnerPhone: Boolean(row.public_owner_phone),
+      ownerPhone: row.owner_phone,
       status: row.status,
       photoPath: row.photo_path,
       photo: getPhotoUrl(row.photo_path),
@@ -109,7 +141,8 @@
       allergies: hasPrivateHealthFields ? row.allergies : row.public_allergies,
       publicAllergies: Boolean(row.public_allergies),
       medications: row.medications,
-      vaccines: row.vaccines,
+      vaccines: hasPrivateHealthFields ? row.vaccines : row.public_vaccines,
+      publicVaccines: Boolean(row.public_vaccines_visible),
       clinicalHistory: row.clinical_history,
       publicToken: row.public_token
     };
@@ -682,9 +715,12 @@
     if (selectedPet) {
       if (profile) {
         profile.hidden = false;
-        const medicalDetails = [['Enfermedades', selectedPet.diseases, selectedPet.publicDiseases], ['Problemas cardíacos', selectedPet.heartProblems, selectedPet.publicHeartProblems], ['Alergias', selectedPet.allergies, selectedPet.publicAllergies]].filter(([, value, isPublic]) => value && isPublic).map(([label, value]) => `<p><strong>${label}:</strong> ${value}</p>`).join('');
+        const medicalDetails = [['Enfermedades', selectedPet.diseases, selectedPet.publicDiseases], ['Problemas cardíacos', selectedPet.heartProblems, selectedPet.publicHeartProblems], ['Alergias', selectedPet.allergies, selectedPet.publicAllergies]].filter(([, value, isPublic]) => value && isPublic).map(([label, value]) => `<p><strong>${label}:</strong> ${escapeHtml(value)}</p>`).join('');
+        const vaccineRecords = selectedPet.publicVaccines ? parseVaccineRecords(selectedPet.vaccines).filter((record) => record.name || record.date || record.nextDate) : [];
+        const vaccineTable = vaccineRecords.length ? `<section class="public-medical"><h2>Vacunas</h2><div class="vaccine-table-wrap"><table class="vaccine-table"><thead><tr><th>Vacuna</th><th>Fecha de aplicación</th><th>Próxima dosis</th></tr></thead><tbody>${vaccineRecords.map((record) => `<tr><td>${escapeHtml(record.name || '—')}</td><td>${escapeHtml(record.date || '—')}</td><td>${escapeHtml(record.nextDate || '—')}</td></tr>`).join('')}</tbody></table></div></section>` : '';
         const isLost = (selectedPet.status || 'lost') === 'lost';
-        profile.innerHTML = `<div class="profile-photo"><img src="${selectedPet.photo || selectedPet.photoUrl || 'pet-placeholder.svg'}" alt="${selectedPet.name}"></div><div class="profile-content"><div class="eyebrow"><span class="material-symbols-outlined">${isLost ? 'warning' : 'pets'}</span>${isLost ? 'Mascota perdida' : 'Perfil de mascota'}</div><h1>${selectedPet.name}</h1><p>${selectedPet.species}${selectedPet.breed ? ` · ${selectedPet.breed}` : ''}${selectedPet.sex ? ` · ${selectedPet.sex}` : ''}</p><p><strong>Tamaño:</strong> ${getPetSizeLabel(selectedPet)}</p>${selectedPet.temperament ? `<p><strong>Temperamento:</strong> ${selectedPet.temperament}</p>` : ''}${isLost ? `<p><strong>Última ubicación:</strong> ${selectedPet.lastSeen || 'Zona por confirmar'}</p>` : ''}${medicalDetails ? `<section class="public-medical"><h2>Información importante</h2>${medicalDetails}</section>` : ''}<div class="profile-actions"><a class="btn btn-primary" data-contact-link href="#" target="_blank" rel="noopener"><span class="material-symbols-outlined">chat</span>Contactar</a><a class="btn btn-secondary" data-close-profile href="#perdidas">Cerrar</a></div></div>`;
+        const ownerPhoneLink = selectedPet.ownerPhone ? `https://wa.me/${normalizePhone(selectedPet.ownerPhone)}` : '';
+        profile.innerHTML = `<div class="profile-photo"><img src="${escapeHtml(selectedPet.photo || selectedPet.photoUrl || 'pet-placeholder.svg')}" alt="${escapeHtml(selectedPet.name)}"></div><div class="profile-content"><div class="eyebrow"><span class="material-symbols-outlined">${isLost ? 'warning' : 'pets'}</span>${isLost ? 'Mascota perdida' : 'Perfil de mascota'}</div><h1>${escapeHtml(selectedPet.name)}</h1><p>${escapeHtml(selectedPet.species)}${selectedPet.breed ? ` · ${escapeHtml(selectedPet.breed)}` : ''}${selectedPet.sex ? ` · ${escapeHtml(selectedPet.sex)}` : ''}</p><p><strong>Tamaño:</strong> ${getPetSizeLabel(selectedPet)}</p>${selectedPet.temperament ? `<p><strong>Temperamento:</strong> ${escapeHtml(selectedPet.temperament)}</p>` : ''}${selectedPet.additionalDescription ? `<p><strong>Descripción adicional:</strong> ${escapeHtml(selectedPet.additionalDescription)}</p>` : ''}${isLost && selectedPet.publicLastSeen && selectedPet.lastSeen ? `<p><strong>Última ubicación:</strong> ${escapeHtml(selectedPet.lastSeen)}</p>` : ''}${selectedPet.ownerPhone ? `<p><strong>Número del propietario:</strong> <a href="${ownerPhoneLink}" target="_blank" rel="noopener">${escapeHtml(selectedPet.ownerPhone)}</a></p>` : ''}${medicalDetails ? `<section class="public-medical"><h2>Información importante</h2>${medicalDetails}</section>` : ''}${vaccineTable}<div class="profile-actions"><a class="btn btn-primary" data-contact-link href="#" target="_blank" rel="noopener"><span class="material-symbols-outlined">chat</span>Contactar</a><a class="btn btn-secondary" data-close-profile href="#perdidas">Cerrar</a></div></div>`;
         profile.querySelector('[data-close-profile]')?.addEventListener('click', () => {
           profile.hidden = true;
           document.querySelector('#perdidas')?.removeAttribute('hidden');
@@ -703,7 +739,7 @@
       card.dataset.generatedPet = 'true';
       const petIsLost = (pet.status || 'lost') === 'lost';
       const petStatusLabel = petIsLost ? 'Perdida' : pet.status === 'reunited' ? 'Reencontrada' : 'Activa';
-      card.innerHTML = `<a class="pet-profile-link" href="index.html#mascota=${pet.id}"><div class="photo-strip"><img src="${pet.photo || pet.photoUrl || 'pet-placeholder.svg'}" alt="${pet.name}"></div><div class="report-body"><div class="report-head"><div><h3>${pet.name}</h3><p>${pet.species}${pet.breed ? ` · ${pet.breed}` : ''}</p></div><div class="report-badges"><span class="size-chip">${getPetSizeLabel(pet)}</span><span class="status-chip ${petIsLost ? '' : 'seen'}">${petStatusLabel}</span></div></div><div class="report-meta">${petIsLost ? `<span><span class="material-symbols-outlined">location_on</span> ${pet.lastSeen || 'Zona por confirmar'}</span>` : ''}<span class="btn btn-primary">Ver perfil</span></div></div></a>`;
+      card.innerHTML = `<a class="pet-profile-link" href="index.html#mascota=${pet.id}"><div class="photo-strip"><img src="${pet.photo || pet.photoUrl || 'pet-placeholder.svg'}" alt="${pet.name}"></div><div class="report-body"><div class="report-head"><div><h3>${pet.name}</h3><p>${pet.species}${pet.breed ? ` · ${pet.breed}` : ''}</p></div><div class="report-badges"><span class="size-chip">${getPetSizeLabel(pet)}</span><span class="status-chip ${petIsLost ? '' : 'seen'}">${petStatusLabel}</span></div></div><div class="report-meta">${petIsLost && pet.publicLastSeen && pet.lastSeen ? `<span><span class="material-symbols-outlined">location_on</span> ${pet.lastSeen}</span>` : ''}<span class="btn btn-primary">Ver perfil</span></div></div></a>`;
       container.appendChild(card);
     });
     if (!pets.length) container.innerHTML = '<p class="muted empty-state">Aún no hay perfiles publicados. La información aparecerá aquí cuando administración registre una mascota.</p>';
@@ -765,7 +801,7 @@
       uploadLabel.classList.add('has-preview');
     });
     const fillPetForm = (pet) => {
-      Object.entries({ ownerName: pet.ownerName, ownerPhone: pet.ownerPhone, ownerEmail: pet.ownerEmail, ownerAddress: pet.ownerAddress, ownerLocationLink: pet.ownerLocationLink, name: pet.name, species: pet.species, size: getPetSize(pet), breed: pet.breed, sex: pet.sex, temperament: pet.temperament, lastSeen: pet.lastSeen, status: pet.status || 'lost', diseases: pet.diseases, heartProblems: pet.heartProblems, allergies: pet.allergies, medications: pet.medications, vaccines: pet.vaccines, clinicalHistory: pet.clinicalHistory }).forEach(([name, value]) => {
+      Object.entries({ ownerName: pet.ownerName, ownerPhone: pet.ownerPhone, ownerEmail: pet.ownerEmail, ownerAddress: pet.ownerAddress, ownerLocationLink: pet.ownerLocationLink, name: pet.name, species: pet.species, size: getPetSize(pet), breed: pet.breed, sex: pet.sex, temperament: pet.temperament, additionalDescription: pet.additionalDescription, lastSeen: pet.lastSeen, status: pet.status || 'lost', diseases: pet.diseases, heartProblems: pet.heartProblems, allergies: pet.allergies, medications: pet.medications, vaccines: pet.vaccines, clinicalHistory: pet.clinicalHistory }).forEach(([name, value]) => {
         const input = petForm.elements[name];
         if (!input) return;
         if (input.tagName === 'SELECT' && value && !Array.from(input.options).some((option) => option.value === value)) {
@@ -773,9 +809,16 @@
         }
         input.value = value || '';
       });
-      ['diseases', 'heartProblems', 'allergies'].forEach((name) => {
+      renderVaccineRows(parseVaccineRecords(pet.vaccines || ''));
+      ['diseases', 'heartProblems', 'allergies', 'ownerPhone', 'lastSeen', 'vaccines'].forEach((name) => {
         const checkbox = petForm.elements[`public${name[0].toUpperCase()}${name.slice(1)}`];
-        if (checkbox) checkbox.checked = Boolean(pet[`public${name[0].toUpperCase()}${name.slice(1)}`]);
+        if (checkbox) checkbox.checked = Boolean(name === 'ownerPhone'
+          ? pet.publicOwnerPhone
+          : name === 'lastSeen'
+            ? pet.publicLastSeen
+            : name === 'vaccines'
+              ? pet.publicVaccines
+              : pet[`public${name[0].toUpperCase()}${name.slice(1)}`]);
       });
       petForm.dataset.editingId = pet.id;
       document.querySelector('[data-admin-view="anadir"]')?.click();
@@ -788,18 +831,62 @@
       field.innerHTML = '<label for="admin-pet-temperament">Temperamento</label><select id="admin-pet-temperament" name="temperament"><option value="">Sin especificar</option><option>Cariñoso</option><option>Tímido</option><option>Juguetón</option><option>Tranquilo</option><option>Asustadizo</option></select>';
       petForm.querySelector('#admin-pet-sex')?.closest('.form-field')?.after(field);
     }
+    if (petForm && !petForm.querySelector('[name="additionalDescription"]')) {
+      const field = document.createElement('div');
+      field.className = 'form-field injected-field';
+      field.innerHTML = '<label for="admin-pet-additional-description">Descripción adicional</label><textarea id="admin-pet-additional-description" name="additionalDescription" placeholder="Edad, señas particulares u otros datos útiles si se extravía"></textarea>';
+      petForm.querySelector('[name="temperament"]')?.closest('.form-field')?.after(field);
+    }
+    if (petForm && !petForm.querySelector('[name="publicOwnerPhone"]')) {
+      const toggle = document.createElement('label');
+      toggle.className = 'public-toggle injected-field';
+      toggle.innerHTML = '<input type="checkbox" name="publicOwnerPhone"> Mostrar el número del propietario en el perfil público';
+      petForm.querySelector('[name="ownerPhone"]')?.closest('.form-field')?.append(toggle);
+    }
+    if (petForm && !petForm.querySelector('[name="publicLastSeen"]')) {
+      const toggle = document.createElement('label');
+      toggle.className = 'public-toggle injected-field';
+      toggle.innerHTML = '<input type="checkbox" name="publicLastSeen"> Mostrar la última ubicación públicamente';
+      petForm.querySelector('[name="lastSeen"]')?.closest('.form-field')?.append(toggle);
+    }
+    if (petForm && !petForm.querySelector('[name="publicVaccines"]')) {
+      const toggle = document.createElement('label');
+      toggle.className = 'public-toggle';
+      toggle.innerHTML = '<input type="checkbox" name="publicVaccines"> Mostrar vacunas públicamente';
+      petForm.querySelector('[name="vaccines"]')?.closest('.form-field')?.append(toggle);
+    }
     if (petForm && !petForm.querySelector('[name="status"]')) {
       const field = document.createElement('div');
       field.className = 'form-field injected-field';
-      field.innerHTML = '<label for="admin-pet-status">Estado de la mascota</label><select id="admin-pet-status" name="status"><option value="lost">Modo perdida</option><option value="active">Activa</option><option value="reunited">Reencontrada</option></select><span class="private-note">Solo las mascotas en modo perdida muestran ubicación y alerta pública.</span>';
+      field.innerHTML = '<label for="admin-pet-status">Estado de la mascota</label><select id="admin-pet-status" name="status"><option value="lost">Modo perdida</option><option value="active">Activa</option><option value="reunited">Reencontrada</option></select><span class="private-note">La ubicación se muestra en perfiles de mascotas perdidas solo si activas “Mostrar la última ubicación públicamente”.</span>';
       petForm.querySelector('[name="lastSeen"]')?.closest('.form-field')?.before(field);
     }
     if (petForm && !petForm.querySelector('[name="diseases"]')) {
       const field = document.createElement('fieldset');
       field.className = 'medical-fields';
-      field.innerHTML = '<legend>Historial clínico</legend><div class="form-grid two"><div class="form-field"><label>Enfermedades</label><textarea name="diseases" placeholder="Diagnósticos importantes"></textarea><label class="public-toggle"><input type="checkbox" name="publicDiseases"> Mostrar públicamente</label></div><div class="form-field"><label>Problemas cardíacos</label><textarea name="heartProblems" placeholder="Condición cardíaca"></textarea><label class="public-toggle"><input type="checkbox" name="publicHeartProblems"> Mostrar públicamente</label></div><div class="form-field"><label>Alergias</label><textarea name="allergies" placeholder="Alimentos o medicamentos"></textarea><label class="public-toggle"><input type="checkbox" name="publicAllergies"> Mostrar públicamente</label></div><div class="form-field"><label>Medicamentos y dosis</label><textarea name="medications" placeholder="Tratamiento actual"></textarea><span class="private-note">Solo administración</span></div><div class="form-field"><label>Vacunas</label><textarea name="vaccines" placeholder="Vacunas y fechas"></textarea><span class="private-note">Solo administración</span></div><div class="form-field"><label>Notas clínicas privadas</label><textarea name="clinicalHistory" placeholder="Información solo para administración"></textarea><span class="private-note">Solo administración</span></div></div><p class="muted medical-note">Los campos sin seleccionar permanecen privados.</p>';
+      field.innerHTML = '<legend>Información importante</legend><div class="form-grid two"><div class="form-field"><label>Enfermedades</label><textarea name="diseases" placeholder="Diagnósticos importantes"></textarea><label class="public-toggle"><input type="checkbox" name="publicDiseases"> Mostrar públicamente</label></div><div class="form-field"><label>Problemas cardíacos</label><textarea name="heartProblems" placeholder="Condición cardíaca"></textarea><label class="public-toggle"><input type="checkbox" name="publicHeartProblems"> Mostrar públicamente</label></div><div class="form-field"><label>Alergias</label><textarea name="allergies" placeholder="Alimentos o medicamentos"></textarea><label class="public-toggle"><input type="checkbox" name="publicAllergies"> Mostrar públicamente</label></div><div class="form-field vaccine-field"><label>Vacunas</label><input type="hidden" name="vaccines"><div class="vaccine-table-wrap"><table class="vaccine-table"><thead><tr><th>Vacuna</th><th>Fecha de aplicación</th><th>Próxima dosis</th><th><span class="visually-hidden">Acciones</span></th></tr></thead><tbody data-vaccine-rows></tbody></table></div><button class="btn btn-secondary btn-small" type="button" data-add-vaccine><span class="material-symbols-outlined">add</span>Agregar vacuna</button><label class="public-toggle"><input type="checkbox" name="publicVaccines"> Mostrar vacunas públicamente</label></div><div class="form-field"><label>Desparasitación y medicación</label><textarea name="medications" placeholder="Producto o medicamento, dosis y fecha"></textarea><span class="private-note">Solo administración</span></div><div class="form-field"><label>Notas clínicas privadas</label><textarea name="clinicalHistory" placeholder="Información solo para administración"></textarea><span class="private-note">Solo administración</span></div></div><p class="muted medical-note">Puedes registrar cada vacuna y sus fechas. Las vacunas solo se muestran en el perfil QR cuando activas “Mostrar vacunas públicamente”.</p>';
       petForm.querySelector('[name="lastSeen"]')?.closest('.form-field')?.after(field);
     }
+    const vaccineRows = petForm?.querySelector('[data-vaccine-rows]');
+    const vaccinesInput = petForm?.elements.vaccines;
+    const renderVaccineRows = (records = []) => {
+      if (!vaccineRows) return;
+      vaccineRows.innerHTML = records.map((record) => `<tr><td><input type="text" data-vaccine-name aria-label="Nombre de la vacuna" value="${escapeHtml(record.name)}" placeholder="Ej. Antirrábica"></td><td><input type="date" data-vaccine-date aria-label="Fecha de aplicación" value="${escapeHtml(record.date)}"></td><td><input type="date" data-vaccine-next-date aria-label="Fecha de próxima dosis" value="${escapeHtml(record.nextDate)}"></td><td><button class="icon-btn vaccine-remove" type="button" data-remove-vaccine aria-label="Quitar vacuna"><span class="material-symbols-outlined">delete</span></button></td></tr>`).join('');
+    };
+    const readVaccineRows = () => Array.from(vaccineRows?.rows || []).map((row) => ({
+      name: row.querySelector('[data-vaccine-name]').value.trim(),
+      date: row.querySelector('[data-vaccine-date]').value,
+      nextDate: row.querySelector('[data-vaccine-next-date]').value
+    }));
+    renderVaccineRows(parseVaccineRecords(vaccinesInput?.value || ''));
+    vaccineRows?.addEventListener('click', (event) => {
+      if (!event.target.closest('[data-remove-vaccine]')) return;
+      event.target.closest('tr')?.remove();
+    });
+    petForm?.querySelector('[data-add-vaccine]')?.addEventListener('click', () => {
+      renderVaccineRows([...readVaccineRows(), { name: '', date: '', nextDate: '' }]);
+      vaccineRows?.lastElementChild?.querySelector('[data-vaccine-name]')?.focus();
+    });
     if (petForm && !petForm.querySelector('[name="ownerLocationLink"]')) {
       const field = document.createElement('div');
       field.className = 'form-field injected-field';
@@ -812,9 +899,13 @@
       event.preventDefault();
       if (!petForm.checkValidity()) { petForm.reportValidity(); return; }
       const pet = Object.fromEntries(new FormData(petForm).entries());
+      pet.vaccines = JSON.stringify(readVaccineRows().filter((record) => record.name || record.date || record.nextDate));
       pet.publicDiseases = pet.publicDiseases === 'on';
       pet.publicHeartProblems = pet.publicHeartProblems === 'on';
       pet.publicAllergies = pet.publicAllergies === 'on';
+      pet.publicOwnerPhone = pet.publicOwnerPhone === 'on';
+      pet.publicLastSeen = pet.publicLastSeen === 'on';
+      pet.publicVaccines = pet.publicVaccines === 'on';
       const galleryFile = petForm.querySelector('[data-pet-gallery]')?.files[0];
       if (!client && !isLocalMode) return showToast('No hay una conexión activa para guardar la mascota.');
       if (galleryFile && (!['image/jpeg', 'image/png', 'image/webp'].includes(galleryFile.type) || galleryFile.size > 5242880)) {
@@ -859,6 +950,7 @@
           pet.id = petId;
           pet.qrUrl = savedPet.qrUrl;
           petForm.reset();
+          renderVaccineRows();
           clearPhotoPreview();
           delete petForm.dataset.editingId;
           renderAdminPets();
@@ -914,6 +1006,9 @@
         size: pet.size,
         sex: pet.sex || null,
         temperament: pet.temperament || null,
+        additional_description: pet.additionalDescription.trim() || null,
+        public_owner_phone: pet.publicOwnerPhone,
+        public_last_seen: pet.publicLastSeen,
         last_seen_place: pet.lastSeen.trim(),
         status: pet.status || 'lost',
         photo_path: photoPath,
@@ -924,6 +1019,7 @@
         allergies: pet.allergies || null,
         public_allergies: pet.publicAllergies,
         medications: pet.medications || null,
+        public_vaccines_visible: pet.publicVaccines,
         vaccines: pet.vaccines || null,
         clinical_history: pet.clinicalHistory || null
       };
@@ -957,6 +1053,7 @@
       pet.id = petId;
       pet.qrUrl = savedPet.qrUrl;
       petForm.reset();
+      renderVaccineRows();
       clearPhotoPreview();
       delete petForm.dataset.editingId;
       renderAdminPets();
@@ -977,7 +1074,7 @@
         const petIsLost = (pet.status || 'lost') === 'lost';
         const statusLabel = petIsLost ? 'Perdida' : pet.status === 'reunited' ? 'Reencontrada' : 'Activa';
         const photo = pet.photo || pet.photoUrl || 'pet-placeholder.svg';
-        return `<article class="card report-card"><img src="${photo}" alt="${pet.name}"><div class="report-body"><div class="report-head"><div><h3>${pet.name}</h3><p>${pet.species}${pet.breed ? ` · ${pet.breed}` : ''}${pet.sex ? ` · ${pet.sex}` : ''}</p></div><div class="report-badges"><span class="size-chip">${getPetSizeLabel(pet)}</span><span class="status-chip ${petIsLost ? '' : 'seen'}">${statusLabel}</span></div></div><div class="report-meta">${petIsLost ? `<span><span class="material-symbols-outlined">location_on</span> ${pet.lastSeen || 'Zona por confirmar'}</span>` : ''}<a class="btn btn-primary" href="index.html#mascota=${pet.id}">Ver perfil público</a></div></div></article>`;
+        return `<article class="card report-card"><img src="${photo}" alt="${pet.name}"><div class="report-body"><div class="report-head"><div><h3>${pet.name}</h3><p>${pet.species}${pet.breed ? ` · ${pet.breed}` : ''}${pet.sex ? ` · ${pet.sex}` : ''}</p></div><div class="report-badges"><span class="size-chip">${getPetSizeLabel(pet)}</span><span class="status-chip ${petIsLost ? '' : 'seen'}">${statusLabel}</span></div></div><div class="report-meta">${petIsLost && pet.publicLastSeen && pet.lastSeen ? `<span><span class="material-symbols-outlined">location_on</span> ${pet.lastSeen}</span>` : ''}<a class="btn btn-primary" href="index.html#mascota=${pet.id}">Ver perfil público</a></div></div></article>`;
       }).join('') : '<p class="muted empty-state">Aún no hay mascotas publicadas. Registra el primer perfil para comenzar.</p>';
     }
     if (!container) return;

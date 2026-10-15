@@ -41,6 +41,9 @@ create table public.pets (
   size varchar(10) not null check (size in ('small', 'medium', 'large')),
   sex varchar(30),
   temperament varchar(40),
+  additional_description text,
+  public_owner_phone boolean not null default false,
+  public_last_seen boolean not null default false,
   last_seen_place varchar(255) not null default '',
   status varchar(20) not null default 'lost' check (status in ('active', 'lost', 'reunited', 'inactive')),
   photo_path text,
@@ -51,6 +54,7 @@ create table public.pets (
   allergies text,
   public_allergies boolean not null default false,
   medications text,
+  public_vaccines_visible boolean not null default false,
   vaccines text,
   clinical_history text,
   created_at timestamptz not null default now(),
@@ -103,14 +107,20 @@ select
   p.size,
   p.sex,
   p.temperament,
-  p.last_seen_place,
+  p.additional_description,
+  p.public_last_seen,
+  case when p.public_last_seen then p.last_seen_place end as last_seen_place,
   p.status,
   case when p.public_diseases then p.diseases end as public_diseases,
   case when p.public_heart_problems then p.heart_problems end as public_heart_problems,
   case when p.public_allergies then p.allergies end as public_allergies,
+  case when p.public_vaccines_visible then p.vaccines end as public_vaccines,
+  p.public_vaccines_visible,
+  case when p.public_owner_phone then o.phone end as owner_phone,
   p.photo_path,
   q.public_token
 from public.pets p
+join public.owners o on o.id = p.owner_id
 join public.qr_tags q on q.pet_id = p.id and q.is_active
 where p.status in ('lost', 'active', 'reunited');
 

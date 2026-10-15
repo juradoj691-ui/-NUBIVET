@@ -10,7 +10,7 @@ Si Supabase no está configurado, la aplicación puede mostrar contenido de demo
 
 1. Crea un proyecto nuevo en [Supabase](https://supabase.com/). No se necesita importar registros de ejemplo.
 2. Abre **SQL Editor**, pega el contenido de `schema.sql` y ejecútalo una sola vez. Crea las tablas vacías, políticas RLS, la vista pública segura y el bucket de fotos.
-   - Si el proyecto ya tenía el esquema anterior, ejecuta también `cover-settings-migration.sql` para que el sitio público pueda leer la nueva portada.
+   - Si el proyecto ya tenía un esquema anterior, ejecuta `cover-settings-migration.sql` y `pet-profile-fields-migration.sql` para actualizar la portada y los campos del perfil QR.
 3. En **Authentication > Users**, crea el primer usuario de administración con correo y contraseña. Desactiva el registro público de usuarios.
 4. Copia el UUID de esa cuenta, abre **SQL Editor** y autorízala ejecutando:
 
@@ -34,13 +34,16 @@ Si Supabase no está configurado, la aplicación puede mostrar contenido de demo
 7. Publica los archivos de esta carpeta en un hosting de sitios estáticos con HTTPS. No abras la aplicación directamente mediante `file://`. La ruta publicada debe permitir acceder a `index.html`, `login.html`, `panel.html`, `styles.css`, `app.js`, `supabase-config.js` y `schema.sql`.
 8. En **Authentication > URL Configuration**, añade el dominio HTTPS publicado como URL permitida.
 
-Las credenciales de administración se validan con Supabase Auth y el permiso de la cuenta se comprueba en `admin_users`. Las solicitudes públicas solo pueden insertar datos nuevos con estado pendiente. La dirección y los datos privados de los propietarios no se exponen en el perfil QR público. Las imágenes aceptadas son JPG, PNG y WEBP de hasta 5 MB.
+Las credenciales de administración se validan con Supabase Auth y el permiso de la cuenta se comprueba en `admin_users`. Las solicitudes públicas solo pueden insertar datos nuevos con estado pendiente. La dirección del propietario no se expone en el perfil QR; su teléfono permanece oculto salvo que se active expresamente la opción para mostrarlo. Las imágenes aceptadas son JPG, PNG y WEBP de hasta 5 MB.
 
 ## Uso inicial
 
 - Visita `index.html` para conocer el servicio, solicitar un collar, revisar los perfiles públicos y consultar los modelos CAT, MINI y MAX.
 - Ingresa en `login.html` con el usuario creado en Supabase para administrar solicitudes y registrar mascotas.
 - El panel incluye módulos separados para mascotas, dueños (con sus mascotas agrupadas) y la portada de inicio. Desde Mascotas puedes editar, borrar o cambiar entre “Perdida” y “Reencontrada”; desde Portada puedes subir una imagen JPG, PNG o WEBP de hasta 5 MB.
+- Al editar una mascota puedes añadir una descripción libre y vacunas visibles en el perfil QR. La ubicación es opcional y el número del propietario solo se publica si se activa expresamente su casilla.
+- La última ubicación y las vacunas tienen casillas independientes para decidir si se muestran en público; si se dejan desactivadas, permanecen privadas. La migración conserva para perfiles existentes la visibilidad previa de ubicación y vacunas; en nuevas mascotas ambas opciones comienzan desactivadas.
+- Las vacunas se registran en filas con nombre, fecha de aplicación y próxima dosis; el perfil QR las presenta en tabla cuando se autoriza su publicación.
 - Al registrar un perfil desde el panel se guarda la ficha en PostgreSQL, se crea su etiqueta QR y se puede descargar o imprimir el QR.
 - La base comienza sin mascotas, propietarios ni solicitudes. Los nuevos datos se agregan desde el panel o desde la solicitud pública.
 - Los datos guardados en versiones de prueba del navegador no se migran; esta configuración inicia una base nueva en Supabase.
